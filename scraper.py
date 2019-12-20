@@ -1,3 +1,33 @@
+##### WORKING CODE #####
+
+##### Product Analyst scrape #####
+
+# Currently, this scipt:
+#1. Takes a URL
+#
+#
+#
+#
+
+
+# Plan is to:
+# 1. given job role and location preferences, get a URL for first page and concurrent pages (seems that concurrent pages have a 'start=x' param, where x == Page number * 25.)
+# 2. Doesn't seem like BS4 (or LI) can ask for more than 25 roles at once
+# 3. Compare to see if location params are exposed in GET response via URL
+# 4. create an object that iterates through each URL, saves the:
+## a. Job ID
+## b. Name of company
+## c. Title of role
+## d. URL tied to each job into an object
+
+# should look like: {[1234, 'Walla Inc', 'Chief Cup Officer', 'we really want a cup balancer, dassit']}
+
+#5. Do this for 150-200 jobs (8 pages)
+#6. Save (a-c) in a new object 'jds'
+#7. Iterate through each jd.URL, scrape the copy, and add them to Jd.desc"
+#8. Save the jds.desc into a .txt file
+
+
 from bs4 import BeautifulSoup
 import requests
 import re # importing for RegEx
@@ -7,14 +37,17 @@ import numpy as npy
 from PIL import Image
 import datetime
 
+
 desired_title = raw_input("Desired title: ")
 desired_title_filename = desired_title.replace(" ", "_")
 desired_title_urlencode = desired_title.replace(" ", "%20")
+
 
 page_links = []
 page_responses = []
 page_contents = []
 
+# creating a variable that will hold jobs (co, title, URL, desc[empty])
 jds = []
 data_id = []
 jd_links = []
@@ -28,7 +61,7 @@ ff__ = open("./LI_Scraper/WC/" + desired_title_filename + "_job_descriptions.txt
 wc_filename = "./LI_Scraper/WC/"+ desired_title_filename + "_WC_" + dt + ".png"
 
 
-#sets STOPWORDS (words that you want the wordcloud to omit).
+#sets STOPWORDS (words that you want the wordcloud to omit). Please remove wine-related stopwords from tutorial
 stopwords = set(STOPWORDS)
 stopwords.update(["Equal Opportunity",
                   "experience",
@@ -99,11 +132,12 @@ stopwords.update(["Equal Opportunity",
 
 
 # Here, we're just importing both Beautiful Soup and the Requests library
+# We
 for i in range(0,9):
     pl_ = 'https://www.linkedin.com/jobs/search/?keywords=' + desired_title_urlencode + '&start=' + (str(25 * i))
     page_links.append(pl_)
 
-    # no text but good to see status of API calls, also needed for BS4 object. this is the url that we've already determined is safe and legal to scrape from.
+    # no text but good to see status of API calls. this is the url that we've already determined is safe and legal to scrape from.
     pr_ = requests.get(page_links[i], timeout=10)
     page_responses.append(pr_)
 
@@ -117,6 +151,7 @@ for i in range(0,9):
     pc_roles = pc_results.find_all(class_="result-card job-result-card result-card--with-hover-state")
 
     pc_results.li['data-id']
+    # get u'1646844476'
 
     pcr__ = pc_results.find_all("li", "result-card job-result-card result-card--with-hover-state")
     sj_responses = []
@@ -129,8 +164,13 @@ for i in range(0,9):
         if i.has_attr("data-id"):
             d_id = i["data-id"]
             data_id.append(d_id)
+            # print(d_id)
+
             url__ = "https://www.linkedin.com/jobs/view/"+ d_id
             jd_links.append(url__)
+            # print "adding %s to URL list" %(d_id)
+            # print "%s added! New url: %s" % (d_id, url__)
+
             sjr__ = requests.get(url__, timeout=10)
             sj_responses.append(sjr__)
 
@@ -138,7 +178,7 @@ for i in range(0,9):
             scrape_job_role = BeautifulSoup(sjr__.content,"html.parser")
 
             #NOTE we only want to add the section where the job description is, in order to save space
-            #NOTE and not have to go through the entire object. Working on this
+            #NOTE and not have to go through the entire object
 
             for element in scrape_job_role.find_all("section", "description"):
                 uni_sjt = unicode(element.text)
@@ -152,8 +192,9 @@ for i in range(0,9):
 ff__.close()
 print "text-blurb saved!"
 
-######## PA word cloud section########
+######## PA word cloud ########
 
+#change the .png to any b&w (not transparent bground) image you like
 wc_mask = npy.array(Image.open("goose_bw.png"))
 
 
